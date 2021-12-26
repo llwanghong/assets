@@ -1,2 +1,2 @@
-# resources
-static resources for blogs
+# assets
+assets for blogs
