@@ -337,8 +337,15 @@ function evaluate(exp, env) {
         return env.set(exp.left.value, evaluate(exp.right, env));
 
       case "binary":
+        var left = evaluate(exp.left, env);
+        if (exp.operator === "&&") {
+          return left !== false && evaluate(exp.right, env);
+        }
+        if (exp.operator === "||") {
+          return left !== false ? left : evaluate(exp.right, env);
+        }
         return apply_op(exp.operator,
-                        evaluate(exp.left, env),
+                        left,
                         evaluate(exp.right, env));
 
       case "lambda":
@@ -382,8 +389,10 @@ function apply_op(op, a, b) {
       case "*": return num(a) * num(b);
       case "/": return num(a) / div(b);
       case "%": return num(a) % div(b);
-      case "&&": return a !== false && b;
-      case "||": return a !== false ? a : b;
+      // pre-process in evaluate avoid imporperly expression evaluation
+      // for a() && b() or a() || b()
+      // case "&&": return a !== false && b;
+      // case "||": return a !== false ? a : b;
       case "<": return num(a) < num(b);
       case ">": return num(a) > num(b);
       case "<=": return num(a) <= num(b);
@@ -419,12 +428,12 @@ globalEnv.def("time", function(func){
 });
 
 if (typeof process != "undefined") (function(){
-    var util = require("util");
     globalEnv.def("println", function(val){
-        util.puts(val);
+        // console.log(val);
+        process.stdout.write(val + '\n');
     });
     globalEnv.def("print", function(val){
-        util.print(val);
+        process.stdout.write(String(val));
     });
     var code = "";
     process.stdin.setEncoding("utf8");
